@@ -1,4 +1,5 @@
 import logging
+import os
 
 ########################################################################################################################
 # Connection and authentication to the exchange and middle wares.
@@ -8,8 +9,8 @@ import logging
 # BASE_URL = "https://testnet.bitmex.com/api/v1/"
 BASE_URL = "https://www.bitmex.com/api/v1/"
 
-API_KEY = "YOUR_KEY"
-API_SECRET = "YOUR_SECRET"
+API_KEY = os.environ['BITMEX_API_KEY']
+API_SECRET = os.environ['BITMEX_API_SECRET']
 
 REDIS_HOST = "redis"
 REDIS_PORT = 6379
