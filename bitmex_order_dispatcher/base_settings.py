@@ -1,0 +1,55 @@
+import logging
+
+########################################################################################################################
+# Connection and authentication to the exchange and middle wares.
+########################################################################################################################
+
+# API URL.
+# BASE_URL = "https://testnet.bitmex.com/api/v1/"
+BASE_URL = "https://www.bitmex.com/api/v1/"
+
+API_KEY = "YOUR_KEY"
+API_SECRET = "YOUR_SECRET"
+
+REDIS_HOST = "redis"
+REDIS_PORT = 6379
+REDIS_DB = 0
+
+REDIS_CANCEL_QUEUE_NAME = 'to-dispatcher:cancels'
+REDIS_POST_ONLY_ORDER_QUEUE_NAME = 'to-dispatcher:post-only-orders'
+
+REDIS_POP_TIMEOUT_SECONDS = 5
+
+
+########################################################################################################################
+# Target
+########################################################################################################################
+
+# Instrument to market make on BitMEX.
+SYMBOL = "XBTUSD"
+
+########################################################################################################################
+# Misc Behavior
+########################################################################################################################
+
+INITIAL_SLEEP_SECONDS = 0
+
+API_EXPIRATION_SECONDS = 3600
+
+REST_TIMEOUT_SECONDS = 10
+REST_MAX_RETRIES = 2
+
+ORDER_ID_PREFIX = "bmxmm_"
+AGENT_NAME = "bmx-order-dispatcher"
+
+NUM_DISPATCHER_WORKERS = 6
+
+########################################################################################################################
+# Logging
+########################################################################################################################
+# Available levels: logging.(DEBUG|INFO|WARN|ERROR)
+LOG_LEVEL = logging.INFO
+
+# Logging to files is not recommended when you run this on Docker.
+# By leaving the name empty the program avoids to create log files.
+LOG_FILE_NAME = ''
