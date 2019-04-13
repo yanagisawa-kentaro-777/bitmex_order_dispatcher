@@ -43,7 +43,7 @@ REST_MAX_RETRIES = 2
 ORDER_ID_PREFIX = "order_dispatcher_"
 AGENT_NAME = "bmx-order-dispatcher"
 
-NUM_DISPATCHER_WORKERS = os.environ['NUM_DISPATCHER_WORKERS']
+NUM_DISPATCHER_WORKERS = int(os.environ['NUM_DISPATCHER_WORKERS'])
 
 ########################################################################################################################
 # Logging
