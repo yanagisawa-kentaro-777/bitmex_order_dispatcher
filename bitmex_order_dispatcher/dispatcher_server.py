@@ -7,7 +7,8 @@ import json
 
 import redis
 
-from bitmexclient import *
+from pybitmex import *
+
 from bitmex_order_dispatcher.settings import settings
 from bitmex_order_dispatcher.utils import log
 
@@ -118,7 +119,7 @@ class OrderDispatcher:
                         if parsed_instruction.is_cancel:
                             logger.info("Received cancel id list %s on %s",
                                         str(parsed_instruction.cancel_id_list), thread_name)
-                            self.bitmex_client.cancel_orders(
+                            self.bitmex_client.rest_cancel_orders(
                                 parsed_instruction.cancel_id_list,
                                 max_retries=REST_MAX_RETRIES
                             )
@@ -126,7 +127,7 @@ class OrderDispatcher:
                         elif parsed_instruction.is_order:
                             logger.info("Received order list %s on %s",
                                         str(parsed_instruction.order_list), thread_name)
-                            self.bitmex_client.place_orders(
+                            self.bitmex_client.rest_place_orders(
                                 parsed_instruction.order_list,
                                 post_only=parsed_instruction.is_post_only,
                                 max_retries=REST_MAX_RETRIES
