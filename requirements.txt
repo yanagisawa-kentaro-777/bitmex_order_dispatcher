@@ -1,5 +1,5 @@
 python-dateutil>=2.8.0
 
-pybitmex>=0.5.2
+pybitmex>=0.5.4
 
 redis>=3.2.0
