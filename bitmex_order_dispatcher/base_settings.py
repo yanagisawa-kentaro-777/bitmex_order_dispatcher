@@ -18,6 +18,7 @@ REDIS_DB = 0
 
 REDIS_CANCEL_QUEUE_NAME = 'to-dispatcher:cancels'
 REDIS_POST_ONLY_ORDER_QUEUE_NAME = 'to-dispatcher:post-only-orders'
+REDIS_MARKET_CLOSE_ORDER_QUEUE_NAME = 'to-dispatcher:market-close-orders'
 
 REDIS_POP_TIMEOUT_SECONDS = 5
 

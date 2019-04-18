@@ -21,6 +21,7 @@ NUM_DISPATCHER_WORKERS = settings.NUM_DISPATCHER_WORKERS
 REDIS_POP_TIMEOUT_SECONDS = settings.REDIS_POP_TIMEOUT_SECONDS
 
 REDIS_CANCEL_QUEUE_NAME = settings.REDIS_CANCEL_QUEUE_NAME
+REDIS_MARKET_CLOSE_ORDER_QUEUE_NAME = settings.REDIS_MARKET_CLOSE_ORDER_QUEUE_NAME
 REDIS_POST_ONLY_ORDER_QUEUE_NAME = settings.REDIS_POST_ONLY_ORDER_QUEUE_NAME
 
 REST_MAX_RETRIES = settings.REST_MAX_RETRIES
@@ -28,10 +29,11 @@ REST_MAX_RETRIES = settings.REST_MAX_RETRIES
 
 class Instruction:
 
-    def __init__(self, is_order, json_obj, is_post_only=True):
+    def __init__(self, is_order, json_obj, is_post_only=True, is_market_close=False):
         self.is_order = is_order
         self.is_cancel = not self.is_order
         self.is_post_only = is_post_only
+        self.is_market_close = is_market_close
         if self.is_order:
             self.order_list = json_obj
             self.cancel_id_list = None
@@ -40,7 +42,9 @@ class Instruction:
             self.cancel_id_list = json_obj
 
     def get_instruction_type_str(self):
-        if self.is_order:
+        if self.is_market_close:
+            return "Close"
+        elif self.is_order:
             return "Order"
         elif self.is_cancel:
             return "Cancel"
@@ -84,6 +88,8 @@ class OrderDispatcher:
                 json_obj = json.loads(instruction[1].decode('utf-8'))
                 if key == REDIS_CANCEL_QUEUE_NAME:
                     return Instruction(is_order=False, json_obj=json_obj)
+                elif key == REDIS_MARKET_CLOSE_ORDER_QUEUE_NAME:
+                    return Instruction(is_order=True, json_obj=json_obj, is_post_only=False, is_market_close=True)
                 elif key == REDIS_POST_ONLY_ORDER_QUEUE_NAME:
                     return Instruction(is_order=True, json_obj=json_obj, is_post_only=True)
                 else:
@@ -106,7 +112,7 @@ class OrderDispatcher:
                 thread_name = threading.current_thread().name
                 # Blocking wait for a new instruction to arrive.
                 instruction = self.redis.brpop(
-                    [REDIS_CANCEL_QUEUE_NAME, REDIS_POST_ONLY_ORDER_QUEUE_NAME],
+                    [REDIS_CANCEL_QUEUE_NAME, REDIS_MARKET_CLOSE_ORDER_QUEUE_NAME, REDIS_POST_ONLY_ORDER_QUEUE_NAME],
                     timeout=REDIS_POP_TIMEOUT_SECONDS
                 )
                 parsed_instruction = self._parse_instruction(instruction)
@@ -124,6 +130,13 @@ class OrderDispatcher:
                                 max_retries=REST_MAX_RETRIES
                             )
                             logger.info("Cancellation requested.")
+                        elif parsed_instruction.is_market_close:
+                            logger.info("Received market close order %s on %s",
+                                        str(parsed_instruction.order_list), thread_name)
+                            self.bitmex_client.rest_market_close_position(
+                                parsed_instruction.order_list[0],
+                                max_retries=REST_MAX_RETRIES
+                            )
                         elif parsed_instruction.is_order:
                             logger.info("Received order list %s on %s",
                                         str(parsed_instruction.order_list), thread_name)
