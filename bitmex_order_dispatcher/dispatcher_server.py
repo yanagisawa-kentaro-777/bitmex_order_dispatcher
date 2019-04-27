@@ -8,6 +8,7 @@ import json
 import redis
 
 from pybitmex import *
+from graphitepusher import GraphiteClient
 
 from bitmex_order_dispatcher.settings import settings
 from bitmex_order_dispatcher.utils import log
@@ -59,6 +60,9 @@ class OrderDispatcher:
         self.bitmex_client = self._create_bitmex_client()
         # Redis client.
         self.redis = redis.StrictRedis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_DB)
+        # Graphite.
+        logger.info("Connecting to Graphite %s: %d", settings.GRAPHITE_HOST, settings.GRAPHITE_PORT)
+        self.graphite = GraphiteClient(settings.GRAPHITE_HOST, settings.GRAPHITE_PORT)
 
     @staticmethod
     def _create_bitmex_client():
@@ -149,6 +153,9 @@ class OrderDispatcher:
                         is_success = True
                         rest_end_time = self._now()
                     except RestClientError as ex:
+                        self.graphite.batch_send(
+                            [("system.order-dispatcher.operation.http-error", 1)]
+                        )
                         rest_end_time = self._now()
                         code = ex.error_code
                         if ex.is_4xx():
@@ -165,6 +172,9 @@ class OrderDispatcher:
                             logger.info(ex.message_str)
                             self._refresh_bitmex_client(thread_name, 1)
                     except Exception as e:
+                        self.graphite.batch_send(
+                            [("system.order-dispatcher.operation.unknown-error", 1)]
+                        )
                         rest_end_time = self._now()
                         code = -1
                         import sys
@@ -188,6 +198,7 @@ class OrderDispatcher:
                     logger.debug("Redis queue timeout or parsing problem on %s", thread_name)
         finally:
             self.bitmex_client.close()
+            self.graphite.close()
 
 
 def start():
